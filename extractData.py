@@ -88,7 +88,7 @@ def endClipToFrames(version, epNumber):
     # Creates directory
     os.makedirs(folderName + "\\imageSequence\\")
     # Saves 30 sec clip as image sequence
-    videoEndClip.write_images_sequence(folderName + "\\imageSequence\\" + "frame%03d.png")
+    videoEndClip.write_images_sequence(folderName + "\\imageSequence\\" + "frame%d.png")
 
 
 # Testing
