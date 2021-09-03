@@ -2,6 +2,11 @@ from pytube import Playlist
 from pytube import YouTube
 from moviepy.editor import *
 import constants
+from skimage.metrics import structural_similarity as compare_ssim
+import imutils
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 
 from datetime import datetime
 
@@ -89,16 +94,49 @@ def endClipToFrames(version, epNumber):
     os.makedirs(folderName + "\\imageSequence\\")
     # Saves 30 sec clip as image sequence
     videoEndClip.write_images_sequence(folderName + "\\imageSequence\\" + "frame%d.png")
+    #he uhhh do be closing
+    videoClip.close()
 
+def compareFrames(version, epNumber, frame1, frame2):
+    # Finds the folder with the video as frames, takes 2 frames in
+    folderName = constants.DOWNLOAD_PATH + "\\" + version + epNumber + "\\imageSequence\\"
+    image1File = folderName + "frame" + frame1 + ".png"
+    image2File = folderName + "frame" + frame2 + ".png"
+
+    # Loads both images into cv2
+    image1 = cv2.imread(image1File)
+    image2 = cv2.imread(image2File)
+
+    #
+    image1gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    image2gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+    similarityScore = compare_ssim(image1gray, image2gray)
+
+    return similarityScore
 
 # Testing
 testVids = boiPlaylist.videos[:5]
-for i in range(5):
+for i in range(1):
     vidData = videoData(testVids[i])
 
     videoDownload(testVids[1], vidData[1], vidData[0])
     eyyErybody(vidData[1], vidData[0])
     endClipToFrames(vidData[1], vidData[0])
+
+    minScore = [1, 0]
+    scores = np.zeros(900)
+    for j in range(899):
+        score = compareFrames(vidData[1], vidData[0], str(j), str(j+1))
+        scores[j] = score
+        if score < minScore[0]:
+            minScore = [score, j]
+
+    fig, ax = plt.subplots()
+    ax.hist(scores, bins=100)
+    plt.show()
+    #Chart shows .5 and lower might be what we want to analyze
+    print(minScore)
     print(i)
 
 
