@@ -73,12 +73,27 @@ def eyyErybody(version, epNumber):
     eyyErybodyClip.write_audiofile(audioFileFolder + "eyyerybody.wav", codec="pcm_s32le")
     audioClip.close()
 
+def endClipToFrames(version, epNumber):
+    folderName = constants.DOWNLOAD_PATH + "\\"+ version + epNumber
+    videoFileName = version + epNumber + ".mp4"
+    videoFileLocation = folderName + "\\" + videoFileName
+
+    #Pulls the video clip in, removes last 30 seconds
+    videoClip = VideoFileClip(videoFileLocation)
+    videoEndClip = videoClip.subclip(videoClip.duration-30,videoClip.duration)
+
+    #Saves 30 sec clip as image sequence (900?)
+    os.makedirs(folderName + "\\imageSequence\\")
+    videoEndClip.write_images_sequence(folderName + "\\imageSequence\\" + "frame%03d.png")
+
 # Testing
 testVids = boiPlaylist.videos[:5]
 for i in range(5):
     vidData = videoData(testVids[i])
+
     videoDownload(testVids[1], vidData[1], vidData[0])
     eyyErybody(vidData[1], vidData[0])
+    endClipToFrames(vidData[1], vidData[0])
     print(i)
 
 
