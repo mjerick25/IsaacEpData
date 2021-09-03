@@ -1,6 +1,8 @@
 from pytube import Playlist
 from pytube import YouTube
+from moviepy.editor import *
 import constants
+
 from datetime import datetime
 
 boiPlaylist = Playlist(constants.ISAAC_PLAYLIST)
@@ -47,11 +49,37 @@ def videoData(vid):
 def videoDownload(vid, version, epNumber):
     #Downloads an mp4 version of the episode at 144p
     vidToDownload = vid.streams.filter(res="144p", subtype="mp4").first()
+    audioToDownload = vid.streams.get_audio_only()
     #Saves the mp4 to DOWNLOAD_PATH in a folder in the format version###
     folderName = version + epNumber
-    fileName = folderName + ".mp4"
-    vidToDownload.download(output_path=constants.DOWNLOAD_PATH + "\\" + folderName, filename=fileName)
+    videoFileName = folderName + ".mp4"
+    #Separately downloads the audio from the video
+    audioFileName = folderName + "audio.mp4"
 
+    vidToDownload.download(output_path=constants.DOWNLOAD_PATH + "\\" + folderName, filename=videoFileName)
+    audioToDownload.download(output_path = constants.DOWNLOAD_PATH + "\\" + folderName, filename=audioFileName)
+
+def eyyErybody(version, epNumber):
+    # Finds the location of the audio file for a given video
+    audioFileFolder = constants.DOWNLOAD_PATH + "\\" + version + epNumber + "\\"
+    audioFileName = version + epNumber + "audio.mp4"
+    audioFileLocation = audioFileFolder + audioFileName
+
+    # Loads in the whole audio clip
+    audioClip = AudioFileClip(audioFileLocation)
+    # Trims the audio clip to the first 2 seconds
+    eyyErybodyClip = audioClip.subclip(0, 2)
+    # Saves the audio clip to the folder for the corresponding video
+    eyyErybodyClip.write_audiofile(audioFileFolder + "eyyerybody.wav", codec="pcm_s32le")
+    audioClip.close()
+
+# Testing
+testVids = boiPlaylist.videos[:5]
+for i in range(5):
+    vidData = videoData(testVids[i])
+    videoDownload(testVids[1], vidData[1], vidData[0])
+    eyyErybody(vidData[1], vidData[0])
+    print(i)
 
 
 
