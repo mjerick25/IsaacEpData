@@ -5,7 +5,6 @@ from datetime import datetime
 
 boiPlaylist = Playlist(constants.ISAAC_PLAYLIST)
 
-
 def videoData(vid):
     # ensures what is passed in is a YouTube object
     if type(vid) != YouTube:
@@ -44,4 +43,15 @@ def videoData(vid):
 
     return [epNumber, version, uploadDate, vidLength]
 
-print(videoData(boiPlaylist.videos[0]))
+
+def videoDownload(vid, version, epNumber):
+    #Downloads an mp4 version of the episode at 144p
+    vidToDownload = vid.streams.filter(res="144p", subtype="mp4").first()
+    #Saves the mp4 to DOWNLOAD_PATH in a folder in the format version###
+    folderName = version + epNumber
+    fileName = folderName + ".mp4"
+    vidToDownload.download(output_path=constants.DOWNLOAD_PATH + "\\" + folderName, filename=fileName)
+
+
+
+
