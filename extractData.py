@@ -91,7 +91,8 @@ def endClipToFrames(version, epNumber):
     videoEndClip = videoClip.subclip(videoClip.duration-30, videoClip.duration)
 
     # Creates directory
-    os.makedirs(folderName + "\\imageSequence\\")
+    if not os.path.isdir(folderName + "\\imageSequence"):
+        os.makedirs(folderName + "\\imageSequence\\")
     # Saves 30 sec clip as image sequence
     videoEndClip.write_images_sequence(folderName + "\\imageSequence\\" + "frame%d.png")
     #he uhhh do be closing
@@ -115,8 +116,55 @@ def compareFrames(version, epNumber, frame1, frame2):
 
     return similarityScore
 
+def analyzePotentialEnd(version, epNumber, frame):
+    #if /endFrames/loss.png is found in image (up to certainty threshold)
+    folderName = constants.DOWNLOAD_PATH + "\\" + version + epNumber + "\\imageSequence\\"
+    frameName = "frame" + frame + ".png"
+    frameLocation = folderName + frameName
+
+    frameImage = cv2.imread(frameLocation, 0)
+
+    lossFrameLocation = constants.DOWNLOAD_PATH + "\\endFrames\\loss.png"
+    lossFrameImage = cv2.imread(lossFrameLocation, 0)
+
+    avgLossScore = 0.0
+    for meth in constants.MATCH_METHODS:
+        methodInstance = eval(meth)
+        res = cv2.matchTemplate(frameImage, lossFrameImage, methodInstance)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        if method == cv2.TM_SQDIFF_NORMED:
+            lossScore = 1-min_val
+        else:
+            lossScore = max_val
+
+        avgLossScore += lossScore
+
+    avgLossScore = avgLossScore/len(constants.MATCH_METHODS)
+
+    if(avgLossScore > constants.LOSS_THRESHOLD):
+        return "loss - certainty: " + str(avgLossScore)
+
+    #iterate through /endFrames/win/ to find most certain frame, win if above some threshold
+    maxWinSimScore = 0
+    maxWinSimImageName = ""
+    for winCase in os.listdir(constants.DOWNLOAD_PATH + "\\endFrames\\wins\\"):
+        winFrameImage = cv2.imread(constants.DOWNLOAD_PATH + "\\endFrames\\wins\\" + winCase, 0)
+        winSimilarityScore = compare_ssim(frameImage, winFrameImage)
+
+        if winSimilarityScore > maxWinSimScore:
+            maxWinSimScore = winSimilarityScore
+            maxWinSimImageName = winCase
+
+    if maxWinSimScore > constants.WIN_THRESHOLD:
+        winType = maxWinSimImageName[3:]
+        return "win: " + winType + " - certainty: " + str(maxWinSimScore)
+
+    #Neither of these catch
+    return None
+
 # Testing
 testVids = boiPlaylist.videos[:5]
+
 for i in range(1):
     vidData = videoData(testVids[i])
 
@@ -124,20 +172,14 @@ for i in range(1):
     eyyErybody(vidData[1], vidData[0])
     endClipToFrames(vidData[1], vidData[0])
 
-    minScore = [1, 0]
-    scores = np.zeros(900)
     for j in range(899):
         score = compareFrames(vidData[1], vidData[0], str(j), str(j+1))
-        scores[j] = score
-        if score < minScore[0]:
-            minScore = [score, j]
-
-    fig, ax = plt.subplots()
-    ax.hist(scores, bins=100)
-    plt.show()
-    #Chart shows .5 and lower might be what we want to analyze
-    print(minScore)
-    print(i)
+        if score < constants.FRAME_IMPORTANCE_THRESHOLD:
+            print("Important frame found: " + str(j+1) + " - frame importance: " + str(score))
+            potential = analyzePotentialEnd(vidData[1], vidData[0], str(j+1))
+            if potential is not None:
+                print(potential)
+                break
 
 
 
