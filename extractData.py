@@ -1,9 +1,12 @@
+##DEPRECIATED FILE
+#Replaced with vidData, createRandoms, cvData
+
 from pytube import Playlist
 from pytube import YouTube
 from moviepy.editor import *
-import constants
+#import constants
 from skimage.metrics import structural_similarity as compare_ssim
-import imutils
+#import imutils
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
